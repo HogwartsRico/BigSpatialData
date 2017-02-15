@@ -28,6 +28,12 @@ public class MutiGridIndex {
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
 
+	public List<Grid> Index(Geometry geometry,Geometry mbr, Integer lastGridLevel) {
+		 List<Grid> grids = new ArrayList<>();
+		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());
+		return getGridsOnRecursive(geometry, startGrid, lastGridLevel,grids);
+		// return Index(geometry, startGrid, lastGridLevel, grids);
+	}
 	public List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel, List<Grid> grids) {
 		System.out.println("网格层级：" + grid.getGridLevel() + " 网格坐标：（" + grid.getGridCoordinate().x + "，"
 				+ grid.getGridCoordinate().y + "）");
@@ -81,9 +87,7 @@ public class MutiGridIndex {
 		parentGeometry.push(geometry);
 		while (parentGrid.isEmpty() == false) {
 			grid = parentGrid.pop();
-			geometry = parentGeometry.pop();
-			System.out.println("网格层级：" + grid.getGridLevel() + " 网格坐标：（" + grid.getGridCoordinate().x + "，"
-					+ grid.getGridCoordinate().y + "）");
+			geometry = parentGeometry.pop();			
 			if (grid.getGridLevel() < lastGridLevel) {
 				if (geometry.contains(grid.getGridGeometry())) {
 					grids.add(grid);
