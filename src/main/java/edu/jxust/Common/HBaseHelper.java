@@ -15,6 +15,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
@@ -36,9 +37,22 @@ import org.apache.hadoop.hbase.client.Scan;
 *  
 */
 public class HBaseHelper {
-	private Configuration conf;// 配置器
+	// private Configuration conf;// 配置器
 	private HBaseAdmin admin;// HBase管理员
-	HConnection connection;
+	// private HConnection connection;
+
+	/** 
+	* <p>Title:HBase操作帮助类 </p> 
+	* <p>Description:HBase操作帮助类，默认主节点域名为master，连接端口为2181 </p> 
+	* @throws IOException 
+	*/
+	public HBaseHelper() throws IOException {
+		Configuration conf = HBaseConfiguration.create();
+		conf.set("hbase.zookeeper.quorum", "master");// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
+		conf.set("hbase.zookeeper.property.clientPort", "2181");
+		this.admin = new HBaseAdmin(getConnection(conf));
+		System.out.println("创建HBase配置成功！");
+	}
 
 	/** 
 	 * 获取HBase配置器 
@@ -48,25 +62,33 @@ public class HBaseHelper {
 	 * @throws IOException 
 	 */
 	public HBaseHelper(Configuration conf) throws IOException {
-		this.conf = HBaseConfiguration.create(conf);
-		this.admin = new HBaseAdmin(this.conf);
-		this.connection = HConnectionManager.createConnection(this.conf);
+		this.admin = new HBaseAdmin(getConnection(conf));
 		System.out.println("创建HBase配置成功！");
 	}
 
 	/** 
-	 * 获取HBase配置器 
-	 *  
-	 * @throws IOException 
-	 */
-	public HBaseHelper() throws IOException {
-		conf = HBaseConfiguration.create();
-		conf.set("hbase.zookeeper.quorum", "master");// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
-		conf.set("hbase.zookeeper.property.clientPort", "2181");
-		this.admin = new HBaseAdmin(this.conf);
+	* <p>Title: </p> 
+	* <p>Description: </p> 
+	* @param masterHost hbase.zookeeper.quorum设置主节点，默认为master
+	* @param clientPort hbase.zookeeper.property.clientPort端口，默认2181
+	* @throws IOException 
+	*/
+	public HBaseHelper(String masterHost, String clientPort) throws IOException {
+		Configuration conf = HBaseConfiguration.create();
+		conf.set("hbase.zookeeper.quorum", masterHost);// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
+		conf.set("hbase.zookeeper.property.clientPort", clientPort);
+		this.admin = new HBaseAdmin(getConnection(conf));
 		System.out.println("创建HBase配置成功！");
 	}
 
+	/** 
+	* @Title: getConfiguration 
+	* @Description: 根据主节点域名和连接端口获取连接配置
+	* @param masterHost 主节点域名
+	* @param clientPort 连接端口
+	* @return 连接配置
+	* @throws 
+	*/
 	public static Configuration getConfiguration(String masterHost, String clientPort) {
 		Configuration conf = HBaseConfiguration.create();
 		conf.set("hbase.zookeeper.quorum", masterHost);// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
@@ -79,15 +101,16 @@ public class HBaseHelper {
 	}
 
 	public static HConnection getConnection(Configuration conf) throws IOException {
+		conf.setLong(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, 12000000);
 		return HConnectionManager.createConnection(conf);
 	}
 
-	public static HTableInterface getTable(String masterHost, String clientPort, String tableName) throws IOException {
-		return getConnection(masterHost, clientPort).getTable(tableName);
+	public HTableInterface getTable(String tableName) throws IOException {
+		return this.admin.getConnection().getTable(tableName);
 	}
 
-	public static HTableInterface getTable(HConnection connection, String tableName) throws IOException {
-		return connection.getTable(tableName);
+	public Boolean tableExist(String tableName) throws IOException {
+		return this.admin.tableExists(tableName);
 	}
 
 	/** 
@@ -149,7 +172,7 @@ public class HBaseHelper {
 	 */
 	public void insertRecord(String tableName, String rowkey, String family, String qualifier, String value)
 			throws IOException {
-		HTableInterface table = connection.getTable(tableName);
+		HTableInterface table = this.admin.getConnection().getTable(tableName);
 		insertRecord(table, rowkey, family, qualifier, value);
 		// Put put = new Put(rowkey.getBytes());
 		// put.add(family.getBytes(), qualifier.getBytes(), value.getBytes());
@@ -174,10 +197,25 @@ public class HBaseHelper {
 	 * @throws IOException 
 	 */
 	public void deleteRecord(String tableName, String rowkey) throws IOException {
-		HTableInterface table = connection.getTable(tableName);
+		HTableInterface table = this.admin.getConnection().getTable(tableName);
 		Delete del = new Delete(rowkey.getBytes());
 		table.delete(del);
 		System.out.println(tableName + "删除行" + rowkey + "成功!");
+	}
+
+	public void deleteRecord(HTableInterface table, byte[] rowkey) throws IOException {
+		Delete del = new Delete(rowkey);
+		table.delete(del);
+	}
+
+	public void deleteAll(String tableName) throws IOException {
+		HTableInterface table = this.admin.getConnection().getTable(tableName);
+		Scan scan = new Scan();
+		ResultScanner rs = table.getScanner(scan);
+		Result result;
+		while ((result = rs.next()) != null) {
+			deleteRecord(table, result.getRow());
+		}
 	}
 
 	/** 
@@ -191,7 +229,7 @@ public class HBaseHelper {
 	 * @throws IOException 
 	 */
 	public Result getOneRecord(String tableName, String rowkey) throws IOException {
-		HTableInterface table = connection.getTable(tableName);
+		HTableInterface table = this.admin.getConnection().getTable(tableName);
 		Get get = new Get(rowkey.getBytes());
 		Result rs = table.get(get);
 		return rs;
@@ -204,7 +242,7 @@ public class HBaseHelper {
 	 * @throws IOException 
 	 */
 	public List<Result> getAllRecord(String tableName) throws IOException {
-		HTableInterface table = connection.getTable(tableName);
+		HTableInterface table = this.admin.getConnection().getTable(tableName);
 		Scan scan = new Scan();
 		ResultScanner scanner = table.getScanner(scan);
 		List<Result> list = new ArrayList<Result>();
@@ -224,5 +262,9 @@ public class HBaseHelper {
 	public void deleteFamily(String tableName, String familyColumn) throws IOException {
 		admin.deleteColumn(tableName, familyColumn);
 		System.out.println(String.format("表 %s 成功删除列簇 %s", tableName, familyColumn));
+	}
+	
+	public void close()throws IOException {
+		this.admin.close();
 	}
 }
