@@ -22,19 +22,19 @@ import com.vividsolutions.jts.geom.Polygon;
 public class MutiGridIndex {
 
 	public List<Grid> Index(Geometry geometry, Integer lastGridLevel) {
-		// List<Grid> grids = new ArrayList<>();
+		//List<Grid> grids = new ArrayList<>();
 		Grid startGrid = Grid.getGridFromBox(geometry.getEnvelopeInternal());
-		return getGridsOnStack(geometry, startGrid, lastGridLevel);
-		// return Index(geometry, startGrid, lastGridLevel, grids);
+		 return getGridsOnStack(geometry, startGrid, lastGridLevel);
+		//return Index(geometry, startGrid, lastGridLevel, grids);
 	}
 
-	public List<Grid> Index(Geometry geometry,Geometry mbr, Integer lastGridLevel) {
+	public static List<Grid> Index(Geometry geometry,Geometry mbr, Integer lastGridLevel) {
 		 List<Grid> grids = new ArrayList<>();
 		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());
 		return getGridsOnRecursive(geometry, startGrid, lastGridLevel,grids);
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
-	public List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel, List<Grid> grids) {
+	public static List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel, List<Grid> grids) {
 		System.out.println("网格层级：" + grid.getGridLevel() + " 网格坐标：（" + grid.getGridCoordinate().x + "，"
 				+ grid.getGridCoordinate().y + "）");
 
@@ -51,7 +51,7 @@ public class MutiGridIndex {
 		return grids;
 	}
 
-	public void TravereseSubGrids(Geometry geometry, Grid[] splitGrids, Integer lastGridLevel, List<Grid> grids) {
+	public static void TravereseSubGrids(Geometry geometry, Grid[] splitGrids, Integer lastGridLevel, List<Grid> grids) {
 		for (int i = 0; i < 4; i++) {
 			if (geometry.intersects(splitGrids[i].getGridGeometry()) == false)
 				continue;
@@ -60,7 +60,7 @@ public class MutiGridIndex {
 		}
 	}
 
-	private Geometry intersection(Geometry geometry1, Geometry geometry2) {
+	private static Geometry intersection(Geometry geometry1, Geometry geometry2) {
 		Geometry geometry = geometry1.intersection(geometry2);
 		if (geometry.getGeometryType().equals("GeometryCollection") == false)
 			return geometry;
