@@ -77,6 +77,7 @@ public class HBaseHelper {
 		Configuration conf = HBaseConfiguration.create();
 		conf.set("hbase.zookeeper.quorum", masterHost);// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
 		conf.set("hbase.zookeeper.property.clientPort", clientPort);
+		conf.setLong(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, 600000);
 		this.admin = new HBaseAdmin(getConnection(conf));
 		System.out.println("创建HBase配置成功！");
 	}
