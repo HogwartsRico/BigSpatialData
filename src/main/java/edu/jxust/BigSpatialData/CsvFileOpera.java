@@ -15,9 +15,9 @@ import java.util.List;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.geotools.geometry.jts.JTSFactoryFinder;
-import org.geotools.geometry.jts.WKTWriter2;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.io.WKBWriter;
 import com.vividsolutions.jts.io.WKTReader;
 import edu.jxust.Indexing.Grid;
 import edu.jxust.Indexing.GridCode;
@@ -84,7 +84,7 @@ public class CsvFileOpera {
 		byte[] family = "AttributeInfo".getBytes();// 属性列簇
 		GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
 		WKTReader wktReader = new WKTReader(geometryFactory);
-		WKTWriter2 wktWriter = new WKTWriter2();
+		WKBWriter wkbWriter = new WKBWriter();
 		long count = 0;
 		try (BufferedReader reader = new BufferedReader(new FileReader(dataFilePath))) {
 
@@ -96,8 +96,8 @@ public class CsvFileOpera {
 				Geometry geo = wktReader.read(wkt);
 				String rowkey = getRowkey(geo, layerId, count);
 				Put put = new Put(rowkey.getBytes());
-				put.add(geoInfoFamily, geoColumn, wkt.getBytes());
-				put.add(geoInfoFamily, mbrColumn, wktWriter.write(geo.getEnvelope()).getBytes());
+				put.add(geoInfoFamily, geoColumn, wkbWriter.write(geo));
+				put.add(geoInfoFamily, mbrColumn, wkbWriter.write(geo.getEnvelope()));
 				put.add(geoInfoFamily, featureTypeColumn, geo.getGeometryType().getBytes());
 				put.add(geoInfoFamily, areaColumn, Double.toString(geo.getArea()).getBytes());
 				put.add(geoInfoFamily, lengthColumn, Double.toString(geo.getLength()).getBytes());
@@ -114,6 +114,8 @@ public class CsvFileOpera {
 				}
 			}
 		}
+
+		System.out.println(String.format("总共导入：%s 条", count));
 	}
 
 	private String getRowkey(Geometry g, String layerId, long num) {

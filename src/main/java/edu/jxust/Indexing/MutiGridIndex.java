@@ -34,6 +34,16 @@ public class MutiGridIndex {
 		return getGridsOnRecursive(geometry, startGrid, lastGridLevel,grids);
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
+	/** 
+	* @Title: getGridsOnRecursive 
+	* @Description: 递归遍历网格
+	* @param geometry 几何
+	* @param grid 网格
+	* @param lastGridLevel 终止层级
+	* @param grids 网格集合
+	* @return
+	* @throws 
+	*/
 	public static List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel, List<Grid> grids) {
 		System.out.println("网格层级：" + grid.getGridLevel() + " 网格坐标：（" + grid.getGridCoordinate().x + "，"
 				+ grid.getGridCoordinate().y + "）");
@@ -51,6 +61,15 @@ public class MutiGridIndex {
 		return grids;
 	}
 
+	/** 
+	* @Title: TravereseSubGrids 
+	* @Description: 遍历子网格
+	* @param geometry 待剖分的几何
+	* @param splitGrids 分割网格数组
+	* @param lastGridLevel 终止网格层级
+	* @param grids 网格集合
+	* @throws 
+	*/
 	public static void TravereseSubGrids(Geometry geometry, Grid[] splitGrids, Integer lastGridLevel, List<Grid> grids) {
 		for (int i = 0; i < 4; i++) {
 			if (geometry.intersects(splitGrids[i].getGridGeometry()) == false)
@@ -60,6 +79,14 @@ public class MutiGridIndex {
 		}
 	}
 
+	/** 
+	* @Title: intersection 
+	* @Description: 取两个Geometry交集
+	* @param geometry1
+	* @param geometry2
+	* @return 相交部分Geometry
+	* @throws 
+	*/
 	private static Geometry intersection(Geometry geometry1, Geometry geometry2) {
 		Geometry geometry = geometry1.intersection(geometry2);
 		if (geometry.getGeometryType().equals("GeometryCollection") == false)
@@ -78,7 +105,16 @@ public class MutiGridIndex {
 		return geometryFactory.createMultiPolygon(polygonList.toArray(polygons));
 	}
 
-	// 使用堆栈遍历网格
+	
+	/** 
+	* @Title: getGridsOnStack 
+	* @Description: 使用堆栈遍历网格
+	* @param geometry
+	* @param grid 起始网格
+	* @param lastGridLevel 终止网格层级
+	* @return 多级网格几何
+	* @throws 
+	*/
 	public List<Grid> getGridsOnStack(Geometry geometry, Grid grid, Integer lastGridLevel) {
 		List<Grid> grids = new ArrayList<Grid>();
 		Stack<Grid> parentGrid = new Stack<Grid>();
@@ -107,7 +143,16 @@ public class MutiGridIndex {
 		return grids;
 	}
 
-	// 使用队列遍历网格
+	
+	/** 
+	* @Title: getGridsOnQueue 
+	* @Description: 使用队列遍历网格
+	* @param geometry
+	* @param grid
+	* @param lastGridLevel 终止网格层级
+	* @return 多级网格集合
+	* @throws 
+	*/
 	public List<Grid> getGridsOnQueue(Geometry geometry, Grid grid, Integer lastGridLevel) {
 		List<Grid> grids = new ArrayList<Grid>();
 		Queue<Grid> parentGrid = new LinkedList<Grid>();

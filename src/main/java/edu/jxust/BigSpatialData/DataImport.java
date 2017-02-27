@@ -8,7 +8,9 @@
 */
 package edu.jxust.BigSpatialData;
 
+import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.log4j.BasicConfigurator;
 
 import edu.jxust.Common.HBaseHelper;
 
@@ -29,11 +31,14 @@ public class DataImport {
 	*/
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
+		BasicConfigurator.configure();
 		String header = "G:\\MyFile\\研究生\\论文\\云计算\\测试数据\\AREALM_header.csv";
 		String data = "G:\\MyFile\\研究生\\论文\\云计算\\测试数据\\AREALM.csv";
 		CsvFileOpera csv=new CsvFileOpera(header,data);
-		HTableInterface table=HBaseHelper.getTable("master", "2181", "SpatialData");
-		csv.importData(table, "\\\t", "\\\t");
+		HConnection connection = HBaseHelper.getConnection("master", "2181");
+		HTableInterface dtSpatialData = connection.getTable("SpatialData");
+		csv.importData(dtSpatialData, "\\\t", "\\\t");
+		connection.close();
 	}
 
 }

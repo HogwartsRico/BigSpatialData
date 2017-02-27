@@ -64,7 +64,7 @@ public class App {
 		// | InstantiationException e) {
 		// System.out.println(e.getMessage());
 		// }
-		
+	
 		File f = new File("G:\\MyFile\\研究生\\论文\\云计算\\测试数据\\locations1.csv");
 		  //File file = JFileDataStoreChooser.showOpenFile("csv", f, null);
 		  ReadCSV(f);

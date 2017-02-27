@@ -17,6 +17,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -24,9 +26,12 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.BasicConfigurator;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import edu.jxust.Common.HBaseHelper;
+import edu.jxust.SpatialData.DataTable;
 
 /** 
 * @ClassName: HBaseTest 
@@ -36,7 +41,8 @@ import edu.jxust.Common.HBaseHelper;
 *  
 */
 public class HBaseTest {
-	private static final Log LOG = LogFactory.getLog(HBaseTest.class);
+	private static Logger logger ;
+
 	/** 
 	* @Title: main 
 	* @Description: HBase测试
@@ -44,15 +50,36 @@ public class HBaseTest {
 	* @throws 
 	*/
 	public static void main(String[] args) throws Exception {
-		//System.out.println(App.getId());
+		// System.out.println(App.getId());
 		//BasicConfigurator.configure();
-		Configuration conf = HBaseConfiguration.create();
-		conf.set("hbase.zookeeper.quorum", "master");// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
-	
-//		queryAll(conf,"test1");
-		getReversedData(conf,"SpatialData");
-		//LOG.notify();
+		PropertyConfigurator.configure("src/main/resources/log4j.properties"); 
+		logger= Logger.getLogger(HBaseHelper.class);
+      
+        
+     
+        
+		HBaseHelper hbase = new HBaseHelper();
+		//System.out.println(hbase.tableExist("SpatialData"));
+		//HTableInterface table = hbase.getTable("SpatialIndex_16");
+		//Result  rr=table.get(new Get("08_000023323".getBytes()));
+		 //getReversedData(table,false);
+		//queryAll(table);
+		long startTime=System.currentTimeMillis();
+		DataTable.importNoneIndexData(hbase.getTable("SpatialData"), hbase.getTable("NoneIndexData"));
+		logger.info(String.format("导入时间为：%s", System.currentTimeMillis()-startTime));
+		hbase.close();
+		
+		// hbase.deleteAll("SpatialData");
+
+		// Configuration conf = HBaseConfiguration.create();
+		// conf.set("hbase.zookeeper.quorum", "master");//
+		// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
+
+		// queryAll(conf, "test1");
+
+		// LOG.notify();
 	}
+
 	/**
 	 * 查询目标表数据
 	 * 
@@ -62,27 +89,41 @@ public class HBaseTest {
 	 *            查询数据的目标表名称
 	 * @throws IOException
 	 */
-	public static void queryAll(Configuration configuration, String tableName) throws IOException {
-		HConnection connection = HConnectionManager.createConnection(configuration);
-		HTableInterface table = connection.getTable(tableName);//
+	public static void queryAll(HTableInterface table) throws IOException {
 
 		try {
-			ResultScanner rs = table.getScanner(new Scan());
+			Scan scan = new Scan();
+			ResultScanner rs = table.getScanner(scan);
 			// 取10行数据
-			for (Result r : rs.next(10)) {
-				System.out.println("获得到rowkey:" + new String(r.getRow()));
+			Result r = rs.next();
+			int i = 0;
+			int total=0;
+			while (r != null) {
+				i++;
+				total++;
+				logger.info("获得到rowkey:" + new String(r.getRow()));
 				for (Cell cell : r.rawCells()) {
 					System.out.println("Rowkey : " + Bytes.toString(r.getRow()) + "   Familiy:Quilifier : "
 							+ Bytes.toString(CellUtil.cloneQualifier(cell)) + "   Value : "
 							+ Bytes.toString(CellUtil.cloneValue(cell)) + "   Time : " + cell.getTimestamp());
 				}
+				r = rs.next();
+				if (i >= 2 && r != null) {
+
+					scan.setStartRow(r.getRow());
+					rs.close();
+					rs = table.getScanner(scan);
+					rs.next();
+					i = 0;
+				}
 			}
+			System.out.println(total);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		table.close();
-		connection.close();
 	}
+
 	private static void queryTable(String tableName) throws Exception {
 		Configuration conf = HBaseConfiguration.create();
 		conf.set("hbase.zookeeper.quorum", "master");// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
@@ -102,19 +143,16 @@ public class HBaseTest {
 		}
 	}
 
-	private static void getReversedData(Configuration configuration, String tableName) throws IOException {
-		HConnection connection = HConnectionManager.createConnection(configuration);
-		HTableInterface table = connection.getTable(tableName);//
-
+	private static void getReversedData(HTableInterface table,Boolean setReversed) throws IOException {
 		try {
-			
+
 			Scan scan = new Scan();
-			scan.setReversed(true);//倒序扫描
+			scan.setReversed(setReversed);// 倒序扫描
 			ResultScanner rs = table.getScanner(scan);
-			
+
 			// 取10行数据
 			for (Result r : rs.next(10)) {
-				System.out.println("获得到rowkey:" + new String(r.getRow()));
+			logger.info("获得到rowkey:" + new String(r.getRow()));
 				for (Cell cell : r.rawCells()) {
 					System.out.println("Rowkey : " + Bytes.toString(r.getRow()) + "   Familiy:Quilifier : "
 							+ Bytes.toString(CellUtil.cloneQualifier(cell)) + "   Value : "
@@ -125,6 +163,5 @@ public class HBaseTest {
 			e.printStackTrace();
 		}
 		table.close();
-		connection.close();
 	}
 }
