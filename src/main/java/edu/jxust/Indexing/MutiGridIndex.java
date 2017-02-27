@@ -22,21 +22,28 @@ import com.vividsolutions.jts.geom.Polygon;
 public class MutiGridIndex {
 
 	public List<Grid> Index(Geometry geometry, Integer lastGridLevel) {
-		//List<Grid> grids = new ArrayList<>();
+		// List<Grid> grids = new ArrayList<>();
 		Grid startGrid = Grid.getGridFromBox(geometry.getEnvelopeInternal());
-		 return getGridsOnStack(geometry, startGrid, lastGridLevel);
-		//return Index(geometry, startGrid, lastGridLevel, grids);
-	}
-
-	public static List<Grid> Index(Geometry geometry,Geometry mbr, Integer lastGridLevel) {
-		 List<Grid> grids = new ArrayList<>();
-		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());
-		return getGridsOnRecursive(geometry, startGrid, lastGridLevel,grids);
+		return getGridsOnStack(geometry, startGrid, lastGridLevel);
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
+
+	public static List<Grid> Index(Geometry geometry, Geometry mbr, Integer lastGridLevel) {
+		List<Grid> grids = new ArrayList<>();
+		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());
+		return getGridsOnRecursive(geometry, startGrid, lastGridLevel, grids);
+		// return Index(geometry, startGrid, lastGridLevel, grids);
+	}
+
+	public static List<Grid> IndexOnNormal(Geometry geometry, Geometry mbr, Integer lastGridLevel) {
+		List<Grid> grids = new ArrayList<>();
+		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());
+		return getGridsOnNormal(geometry, startGrid, lastGridLevel, grids);
+	}
+
 	/** 
 	* @Title: getGridsOnRecursive 
-	* @Description: 递归遍历网格
+	* @Description: 递归遍历网格,采用分治策略进行多级网格索引构建
 	* @param geometry 几何
 	* @param grid 网格
 	* @param lastGridLevel 终止层级
@@ -44,7 +51,8 @@ public class MutiGridIndex {
 	* @return
 	* @throws 
 	*/
-	public static List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel, List<Grid> grids) {
+	public static List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel,
+			List<Grid> grids) {
 		System.out.println("网格层级：" + grid.getGridLevel() + " 网格坐标：（" + grid.getGridCoordinate().x + "，"
 				+ grid.getGridCoordinate().y + "）");
 
@@ -61,6 +69,29 @@ public class MutiGridIndex {
 		return grids;
 	}
 
+	public static List<Grid> getGridsOnNormal(Geometry geometry, Grid grid, Integer lastGridLevel, List<Grid> grids) {
+		System.out.println("网格层级：" + grid.getGridLevel() + " 网格坐标：（" + grid.getGridCoordinate().x + "，"
+				+ grid.getGridCoordinate().y + "）");
+
+		if (grid.getGridLevel() < lastGridLevel) {
+			if (geometry.contains(grid.getGridGeometry())) {
+				grids.add(grid);
+				return grids;
+			} else {
+				Grid[] splitGrids = grid.splitGrid();
+				for (int i = 0; i < 4; i++) {
+					if (geometry.intersects(splitGrids[i].getGridGeometry()) == false)
+						continue;
+					getGridsOnNormal(geometry, splitGrids[i], lastGridLevel, grids);
+				}
+
+			}
+		} else if (geometry.intersects(grid.getGridGeometry())) {
+			grids.add(grid);
+		}
+		return grids;
+	}
+
 	/** 
 	* @Title: TravereseSubGrids 
 	* @Description: 遍历子网格
@@ -70,7 +101,8 @@ public class MutiGridIndex {
 	* @param grids 网格集合
 	* @throws 
 	*/
-	public static void TravereseSubGrids(Geometry geometry, Grid[] splitGrids, Integer lastGridLevel, List<Grid> grids) {
+	public static void TravereseSubGrids(Geometry geometry, Grid[] splitGrids, Integer lastGridLevel,
+			List<Grid> grids) {
 		for (int i = 0; i < 4; i++) {
 			if (geometry.intersects(splitGrids[i].getGridGeometry()) == false)
 				continue;
@@ -105,7 +137,6 @@ public class MutiGridIndex {
 		return geometryFactory.createMultiPolygon(polygonList.toArray(polygons));
 	}
 
-	
 	/** 
 	* @Title: getGridsOnStack 
 	* @Description: 使用堆栈遍历网格
@@ -123,7 +154,7 @@ public class MutiGridIndex {
 		parentGeometry.push(geometry);
 		while (parentGrid.isEmpty() == false) {
 			grid = parentGrid.pop();
-			geometry = parentGeometry.pop();			
+			geometry = parentGeometry.pop();
 			if (grid.getGridLevel() < lastGridLevel) {
 				if (geometry.contains(grid.getGridGeometry())) {
 					grids.add(grid);
@@ -143,7 +174,6 @@ public class MutiGridIndex {
 		return grids;
 	}
 
-	
 	/** 
 	* @Title: getGridsOnQueue 
 	* @Description: 使用队列遍历网格
