@@ -1,0 +1,3 @@
+1、远程调试无需添加Hadoop配置文件，如果在resources文件下添加core-site.xml、hdfs-site.xml、mapred-site.xml等三个文件会导致远程调试失败；
+2、远程调试Hadoop和HBase需要配置本地hosts，映射集群地址。例如Windows的hosts文件位于：C:\Windows\System32\drivers\etc；追加IP域名映射；
+3、需要注意MapReduce编程需要配置好依赖包，缺少依赖包虽然不会出现语法错误，但可能出现运行时错误；
