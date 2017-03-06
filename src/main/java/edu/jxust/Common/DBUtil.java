@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.io.InputStream;
 
@@ -96,6 +97,28 @@ public class DBUtil {
 		}
 
 		return con;
+	}
+	
+	public static Connection getDefaultConnection() {
+		Connection cc = null;
+		String driver = "org.apache.phoenix.jdbc.PhoenixDriver";
+		String url = "jdbc:phoenix:192.168.128.1:longRunning";//长时间连接
+
+		try {
+			Class.forName(driver);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		if (cc == null) {
+			try {
+				cc = DriverManager.getConnection(url);
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return cc;
 	}
 
 	/** 
