@@ -8,7 +8,7 @@
 */
 package edu.jxust.Indexing;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 import com.vividsolutions.jts.geom.Coordinate;
 
