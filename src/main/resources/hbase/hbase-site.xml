@@ -46,4 +46,17 @@
 		<name>fs.hdfs.impl</name>
 		<value>org.apache.hadoop.hdfs.DistributedFileSystem</value>
 	</property>
+
+	<property>
+		<name>phoenix.query.timeoutMs</name>
+		<value>3600000</value>
+	</property>
+	<property>
+		<name>hbase.client.operation.timeout</name>
+		<value>600000</value>
+	</property>
+	<property>
+		<name>hbase.client.scanner.timeout.period</name>
+		<value>600000</value>
+	</property>
 </configuration>
