@@ -28,6 +28,15 @@ public class MutiGridIndex {
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
 
+	/** 
+	* @Title: Index 
+	* @Description: 多级网格索引分治策略剖分
+	* @param geometry
+	* @param mbr
+	* @param lastGridLevel
+	* @return
+	* @throws 
+	*/
 	public static List<Grid> Index(Geometry geometry, Geometry mbr, Integer lastGridLevel) {
 		List<Grid> grids = new ArrayList<>();
 		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());
@@ -35,6 +44,15 @@ public class MutiGridIndex {
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
 
+	/** 
+	* @Title: IndexOnNormal 
+	* @Description: 多级网格索引
+	* @param geometry
+	* @param mbr
+	* @param lastGridLevel
+	* @return
+	* @throws 
+	*/
 	public static List<Grid> IndexOnNormal(Geometry geometry, Geometry mbr, Integer lastGridLevel) {
 		List<Grid> grids = new ArrayList<>();
 		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());

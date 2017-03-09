@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -34,6 +35,7 @@ import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
 
 import edu.jxust.Common.HBaseHelper;
+import edu.jxust.Common.QueryRowKey;
 import edu.jxust.SpatialQuery.QueryGeometry;
 
 /**
@@ -154,24 +156,23 @@ public class SpatialQueryTest {
 		HTableInterface tableSpatial = hbase.getTable("SpatialData");
 
 		long startTime = System.currentTimeMillis();
-		List<String> queryCodes = query.getIndexGridCodes(geo, 8, 16);
-		List<String> dealCodes = query.getLastLevelGridCodes();
-		// List<byte[]> spatialDataKey = new ArrayList<byte[]>();
+		//List<String> queryCodes = query.getIndexGridCodes(geo, 8, 16);
+		//List<String> dealCodes = query.getLastLevelGridCodes();
+		
+		Map<QueryRowKey,Integer> queryCodes = query.getIndexMapGridCodes(geo, 8, 16);
+		Map<QueryRowKey,Integer> dealCodes = query.getLastLevelMapGridCodes();
+		
 		List<String> spatialDataKey = new ArrayList<String>();
 		List<String> indexDataKey = new ArrayList<String>();
-		for (String code : queryCodes) {
-			getQuery(tableIndex, code, spatialDataKey);
-		}
-		// 测试
-		// List<String> ls = new ArrayList<>();
-		// for (byte[] dataKey : spatialDataKey) {
-		// ls.add(Bytes.toString(dataKey));
-		// }
+		for (Entry<QueryRowKey,Integer> entry: queryCodes.entrySet()) {
+			getQuery(tableIndex, entry.getKey(), spatialDataKey);
 
-		/* >>>>>>>>> */
-		for (String code : dealCodes) {
-			getIndexKeyQuery(tableIndex, code, spatialDataKey, indexDataKey);
 		}
+		
+		for (Entry<QueryRowKey,Integer> entry: dealCodes.entrySet()) {			
+			getIndexKeyQuery(tableIndex, entry.getKey(), spatialDataKey, indexDataKey);
+		}
+		
 
 		for (String dataKey : indexDataKey) {
 			getSpatialDataKeyQuery(tableSpatial, family, qualifier, Bytes.toBytes(dataKey), geo, spatialDataKey);
@@ -187,10 +188,10 @@ public class SpatialQueryTest {
 		logger.info(String.format("查询返回记录：%s",i));
 	}
 
-	private static void getQuery(HTableInterface table, String dataKey, List<String> values) throws IOException {
+	private static void getQuery(HTableInterface table, QueryRowKey queryKey, List<String> values) throws IOException {
 		Scan scan = new Scan();
-		scan.setStartRow(Bytes.toBytes(dataKey));
-		scan.setStopRow(Bytes.toBytes(dataKey));
+		scan.setStartRow(Bytes.toBytes(queryKey.getStartRow()));
+		scan.setStopRow(Bytes.toBytes(queryKey.getStopRow()));
 		ResultScanner scanner = table.getScanner(scan);
 		Result rs = scanner.next();
 		while (rs != null) {
@@ -204,11 +205,11 @@ public class SpatialQueryTest {
 		}
 	}
 
-	private static void getIndexKeyQuery(HTableInterface table, String dataKey, List<String> spatialDataKey,
+	private static void getIndexKeyQuery(HTableInterface table, QueryRowKey queryKey, List<String> spatialDataKey,
 			List<String> values) throws IOException {
 		Scan scan = new Scan();
-		scan.setStartRow(Bytes.toBytes(dataKey));
-		scan.setStopRow(Bytes.toBytes(dataKey));
+		scan.setStartRow(Bytes.toBytes(queryKey.getStartRow()));
+		scan.setStopRow(Bytes.toBytes(queryKey.getStopRow()));
 		ResultScanner scanner = table.getScanner(scan);
 		Result rs = scanner.next();
 		while (rs != null) {

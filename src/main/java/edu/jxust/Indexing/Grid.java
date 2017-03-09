@@ -8,6 +8,14 @@
 */
 package edu.jxust.Indexing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.geotools.geometry.jts.JTSFactoryFinder;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -16,6 +24,9 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
+import edu.jxust.Common.Hilbert2D;
+import edu.jxust.Common.QueryRowKey;
+
 /**
  * @ClassName: Grid
  * @Description: 网格
@@ -23,12 +34,14 @@ import com.vividsolutions.jts.geom.Point;
  * @date 2017年1月4日 下午1:34:26
  * 
  */
-public class Grid {
+public class Grid implements Comparable<Grid> {
 	private Integer gridLevel;
 	private Coordinate gridCoordinate;
 	private Geometry gridGeometry;
 	private GridSize gridSize;
 	private String gridCode;
+
+	private Integer hilbertNumber = -1;
 
 	public Grid(Integer gridLevel, Coordinate gridCoordinate, Geometry gridGeometry) {
 		Initial(gridLevel, gridCoordinate, gridGeometry);
@@ -46,7 +59,7 @@ public class Grid {
 	* @param p 点空间对象
 	*/
 	public Grid(Integer gridLevel, Point p) {
-		this.gridCoordinate=getGridCoordinate(gridLevel, p);
+		this.gridCoordinate = getGridCoordinate(gridLevel, p);
 		Initial(gridLevel, this.gridCoordinate, getGridGeomtry(gridLevel, gridCoordinate));
 	}
 
@@ -74,10 +87,17 @@ public class Grid {
 
 	public String getGridCode() {
 		if (this.gridCode == null)
-			return this.gridCode=GridCode.getHilbertCode(this.gridLevel, this.gridCoordinate);
+			return this.gridCode = GridCode.getHilbertCode(this.gridLevel, getHilbertNumber());
 		return this.gridCode;
 	}
 
+	public Integer getHilbertNumber() {
+		if (this.hilbertNumber == -1) {
+			Hilbert2D h = new Hilbert2D();
+			return h.xy2d((int) this.gridCoordinate.x, (int) this.gridCoordinate.y, this.gridLevel);
+		}
+		return this.hilbertNumber;
+	}
 
 	public void setGridLevel(Integer gridLevel) {
 		this.gridLevel = gridLevel;
@@ -332,6 +352,72 @@ public class Grid {
 	public static Integer getGridY(GridSize gridSize, double y) {
 		double row = Math.floor((90 - y) / gridSize.getBreadth());
 		return (int) row;
+	}
+
+	/*
+	 * Title: compareTo Description:
+	 * 
+	 * @param o
+	 * 
+	 * @return
+	 * 
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo(Grid otherGrid) {
+		int cop = this.getGridLevel() - otherGrid.getGridLevel();
+		if (cop != 0)
+			return cop;
+		else
+			return this.getHilbertNumber().compareTo(otherGrid.getHilbertNumber());
+
+	}
+
+	public static Map<QueryRowKey, Integer> getMapQueryRowkeys(List<Grid> grids) {
+		Map<QueryRowKey, Integer> mapCodes = new HashMap<>();
+		Map<Integer, List<Integer>> mapGrids = new HashMap<>();
+		for (Grid grid : grids) {
+			List<Integer> girdsHilbertNum = mapGrids.get(grid.getGridLevel());
+			if (girdsHilbertNum == null) {
+				girdsHilbertNum = new ArrayList<>();
+				mapGrids.put(grid.getGridLevel(), girdsHilbertNum);
+			}
+			girdsHilbertNum.add(grid.getHilbertNumber());
+		}
+		Set<Integer> keySet = mapGrids.keySet();
+		Iterator<Integer> iter = keySet.iterator();
+		while (iter.hasNext()) {
+			int key = iter.next();
+			List<Integer> hNums = mapGrids.get(key);
+
+			if (hNums.size() == 1) {
+				String startRowKey = GridCode.getHilbertCode(key, hNums.get(0));
+				String stopRowKey = GridCode.getHilbertCode(key, hNums.get(0) + 1);
+				mapCodes.put(new QueryRowKey(startRowKey, stopRowKey), key);
+				continue;
+			}
+			Collections.sort(hNums);
+
+			int startNum = hNums.get(0);
+			int endNum = hNums.get(0);
+			for (int i = 1; i < hNums.size(); i++) {
+				int hLast = hNums.get(i) - endNum;
+				endNum = hNums.get(i);
+				if (hLast >= 2) {
+					mapCodes.put(new QueryRowKey(GridCode.getHilbertCode(key, startNum),
+							GridCode.getHilbertCode(key, endNum)), key);
+					startNum = endNum;
+				}
+				if (i + 1 < hNums.size()) {
+					continue;
+				}
+
+				mapCodes.put(new QueryRowKey(GridCode.getHilbertCode(key, startNum),
+						GridCode.getHilbertCode(key, endNum + 1)), key);
+			}
+		}
+
+		return mapCodes;
 	}
 
 }

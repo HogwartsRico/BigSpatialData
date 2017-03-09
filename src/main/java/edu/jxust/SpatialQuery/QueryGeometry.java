@@ -10,12 +10,15 @@ package edu.jxust.SpatialQuery;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
+import edu.jxust.Common.QueryRowKey;
 import edu.jxust.Indexing.Grid;
 
 /** 
@@ -28,13 +31,15 @@ import edu.jxust.Indexing.Grid;
 public class QueryGeometry {
 	List<Grid> lastLevelGrids;
 	List<String> lastLevelGridCodes;
-	
-	public List<Grid> getLastLevelGrids() {		
+
+	public List<Grid> getLastLevelGrids() {
 		return this.lastLevelGrids;
 	}
+
 	public List<String> getLastLevelGridCodes() {
 		return this.lastLevelGridCodes;
 	}
+
 	/** 
 	* @Title: Index 
 	* @Description: 多级网格索引分治策略剖分
@@ -58,6 +63,16 @@ public class QueryGeometry {
 		return getGridsOnRecursive(queryGeometry, startGrid, lastGridLevel, grids);
 	}
 
+	public Map<QueryRowKey, Integer> getIndexMapGridCodes(Geometry queryGeometry, Integer startLevel,
+			Integer lastGridLevel) {
+		List<Grid> indexGrids = getIndexGrids(queryGeometry, startLevel, lastGridLevel);
+		return Grid.getMapQueryRowkeys(indexGrids);
+	}
+
+	public Map<QueryRowKey, Integer> getLastLevelMapGridCodes() {
+		return Grid.getMapQueryRowkeys(this.getLastLevelGrids());
+	}
+
 	public List<String> getIndexGridCodes(Geometry queryGeometry, Integer startLevel, Integer lastGridLevel) {
 		List<String> grids = new ArrayList<>();
 		lastLevelGridCodes = new ArrayList<>();
@@ -71,8 +86,6 @@ public class QueryGeometry {
 		}
 		return getGridCodesOnRecursive(queryGeometry, startGrid, lastGridLevel, grids);
 	}
-
-	
 
 	/** 
 	* @Title: getGridsOnRecursive 

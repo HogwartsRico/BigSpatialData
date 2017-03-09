@@ -37,6 +37,10 @@ public class GridCode {
 		return s+"_0"+hilbertEncode(h.xy2d((int)gridCoor.x,(int)gridCoor.y ,gridLevel),gridLevel);
 	}
 	
+	public static String getHilbertCode(Integer gridLevel, Integer hilbertNum){		
+		String s = StringUtils.leftPad(gridLevel.toString(), 2, '0');
+		return s+"_0"+hilbertEncode(hilbertNum,gridLevel);
+	}
 	/** 
 	* @Title: getHilbertEncode 
 	* @Description: 获取Hilbert曲线编码，该编码方式不带层级号，即：“Hilbert曲线四进制编码”
