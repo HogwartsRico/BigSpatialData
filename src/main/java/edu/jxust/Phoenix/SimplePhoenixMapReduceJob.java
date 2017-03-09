@@ -32,8 +32,11 @@ public class SimplePhoenixMapReduceJob {
 	public static void main(String[] args)  throws IOException, ClassNotFoundException, InterruptedException {
 		
 		final Configuration configuration = HBaseConfiguration.create();
-		final Job job = Job.getInstance(configuration, "phoenix-mr-job");
-
+		configuration.set("hbase.zookeeper.quorum", "master");// 使用eclipse时必须添加这个，否则无法定位master需要配置hosts
+		configuration.set("hbase.zookeeper.property.clientPort", "2181");
+		
+		final Job job = Job.getInstance(configuration, "phoenix-mr-job");	
+		job.setOutputValueClass(StockWritable.class); 
 		// We can either specify a selectQuery or ignore it when we would like to retrieve all the columns
 		final String selectQuery = "SELECT STOCK_NAME,RECORDING_YEAR,RECORDINGS_QUARTER FROM STOCK ";
 
@@ -43,7 +46,7 @@ public class SimplePhoenixMapReduceJob {
 
 		// Set the target Phoenix table and the columns
 		PhoenixMapReduceUtil.setOutput(job, "STOCK_STATS", "STOCK_NAME,MAX_RECORDING");
-
+		
 		job.setMapperClass(StockMapper.class);
 		job.setReducerClass(StockReducer.class); 
 		job.setOutputFormatClass(PhoenixOutputFormat.class);
@@ -51,7 +54,7 @@ public class SimplePhoenixMapReduceJob {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(DoubleWritable.class);
 		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(StockWritable.class); 
+		
 		TableMapReduceUtil.addDependencyJars(job);
 		job.waitForCompletion(true);
 	}

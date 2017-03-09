@@ -1,7 +1,6 @@
 package edu.jxust.hadoop;
 
 import java.io.IOException;
-
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -10,7 +9,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 /**
  * 
  * @author GIS
- * @category Mapper��
+ * @category Mapper
  *
  */
 public class MaxTemperatureMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
@@ -18,7 +17,7 @@ public class MaxTemperatureMapper extends Mapper<LongWritable, Text, Text, IntWr
 	private static final int MISSING = 9999;
 
 	@Override
-	protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+	protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {		
 		String line = value.toString();
 		String year = line.substring(15, 19);
 		int airTemperature;

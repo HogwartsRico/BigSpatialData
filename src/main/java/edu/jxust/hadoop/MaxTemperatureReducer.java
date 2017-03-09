@@ -7,7 +7,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
 /**
- * Reducer��
+ * Reducer
  * @author GIS
  *
  */
@@ -21,8 +21,8 @@ public class MaxTemperatureReducer extends Reducer<Text, IntWritable, Text, IntW
 			maxValue = Math.max(maxValue, value.get());
 			System.out.println(String.format("%s:%d",keyin, value.get()));
 		}
-		context.write(new Text(String.format("����%s", keyin)), new IntWritable(maxValue));
-		System.out.println(String.format("���->%s:%d", keyin,maxValue));
+		context.write(new Text(String.format("%s", keyin)), new IntWritable(maxValue));
+		System.out.println(String.format("时间->%s:%d", keyin,maxValue));
 		context.write(keyin, new IntWritable(maxValue));
 	}
 

@@ -3,6 +3,7 @@ package edu.jxust.hadoop;
 import java.io.IOException;
 import java.net.URI;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -53,6 +54,8 @@ public class MaxTemperature {
 
 		job.setMapOutputValueClass(IntWritable.class);
 		System.out.println(job.waitForCompletion(true));
+		String s =StringUtils.leftPad(Integer.toBinaryString(50), 10, '0');
+		System.out.println("Lang测试："+s);
 	}
 
 	/**

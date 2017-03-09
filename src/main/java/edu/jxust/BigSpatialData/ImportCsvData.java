@@ -39,13 +39,13 @@ public class ImportCsvData {
 		this.dataFile = file;
 	}
 
-	public void importData(String dataSplit, String tableName,Connection con) throws Exception{
+	public void importData(String dataSplit, String tableName, Connection con) throws Exception {
 		long count = 0;
 		GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
 		WKTReader wktReader = new WKTReader(geometryFactory);
 		WKBWriter wkbWriter = new WKBWriter();
 		int layerId = 0;
-		
+
 		StringBuffer sqlGeoInfo = new StringBuffer("upsert into Spatial_Data (");
 		sqlGeoInfo.append("DataKey,");
 		sqlGeoInfo.append("Geometry,");
@@ -94,36 +94,37 @@ public class ImportCsvData {
 				pstmtSpatialData.setDouble(6, geo.getLength());
 				pstmtSpatialData.setInt(7, layerId);
 				pstmtSpatialData.addBatch();
-				
+
 				pstmtAttribute.setString(1, rowkey);
 				pstmtAttribute.setString(2, values[1]);
 				pstmtAttribute.setString(3, values[2]);
 				pstmtAttribute.setString(4, values[3]);
 				pstmtAttribute.setString(5, values[4]);
 				pstmtAttribute.setString(6, values[5]);
-				pstmtAttribute.setInt(7, Integer.valueOf(values[6]));
-				pstmtAttribute.setInt(8, Integer.valueOf(values[7]));
+				pstmtAttribute.setInt(7, convertToInt32(values[6]));
+				pstmtAttribute.setInt(8, convertToInt32(values[7]));
 				pstmtAttribute.setString(9, values[8]);
 				pstmtAttribute.setString(10, values[9]);
 				pstmtAttribute.setString(11, values[10]);
 				pstmtAttribute.addBatch();
-				 if(count%1000==0){
-					 pstmtSpatialData.executeBatch();
-	                 pstmtAttribute.executeBatch();
-	             }
+				if (count % 1000 == 0) {
+					pstmtSpatialData.executeBatch();
+					pstmtAttribute.executeBatch();
+				}
 			}
-			 pstmtSpatialData.executeBatch();
-             pstmtAttribute.executeBatch();
-             con.commit();
-             pstmtSpatialData.close();
-             pstmtAttribute.close();
-             con.close();
+			pstmtSpatialData.executeBatch();
+			pstmtAttribute.executeBatch();
+			con.commit();
+			pstmtSpatialData.close();
+			pstmtAttribute.close();
+			con.close();
 		}
 
 	}
+
 	public void importData(String dataSplit, String tableName) throws Exception {
 		Connection con = DBUtil.getConnection();
-		importData(dataSplit,tableName,con);
+		importData(dataSplit, tableName, con);
 	}
 
 	private String[] getSplits(String line, String split) {
@@ -135,6 +136,19 @@ public class ImportCsvData {
 	private String getRowkey(Geometry g, String layerId, long num) {
 		String gridHilbertEncode = GridCode.getHilbertEncode(16, Grid.getGridCoordinate(16, g.getCentroid()));
 		return String.format("%s_%s_%s", gridHilbertEncode, layerId, num);
+	}
+
+	private int convertToInt32(String s) {
+
+		long l = Long.parseLong(s);
+		if (l > Integer.MAX_VALUE) {
+			return Integer.MAX_VALUE;
+		}
+		if (l < Integer.MIN_VALUE) {
+			return Integer.MIN_VALUE;
+		}
+
+		return (int) l;
 	}
 
 	private int getFeatureType(String geometryyType) {

@@ -144,6 +144,7 @@ public class App {
 				long endTime = System.currentTimeMillis();
 				System.out.println("网格计算时间：" + (endTime - startTime));
 				for (Grid gridItem : grids) {
+					featureBuilder=new SimpleFeatureBuilder(ftype);
 					featureBuilder.add(gridItem.getGridGeometry());
 					featureBuilder.add(gridItem.getGridLevel());
 					featureBuilder.add((int)gridItem.getGridCoordinate().x);
@@ -167,9 +168,8 @@ public class App {
 				System.out.println(name);
 			}
 			String p = String.format("G:\\MyFile\\研究生\\论文\\云计算\\测试数据\\test\\%s_%d_stack.shp", name = "China",
-					gridLevel);
-			File f1 = new File(p);
-			URL path = f1.toURI().toURL();
+					gridLevel);			
+			URL path = new File(p).toURI().toURL();
 			CreateShapefileFromCSV(path, featureList, ftype);
 		}
 

@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 
 import edu.jxust.Common.DBUtil;
 
+
 /** 
 * @ClassName: ImportTest 
 * @Description: TODO
@@ -32,7 +33,7 @@ public class ImportTest {
 	*/
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
-		Logger log=Logger.getLogger(ImportTest.class);
+		Logger log=Logger.getLogger(ImportTest.class);		
 		String data = "G:\\MyFile\\研究生\\论文\\云计算\\测试数据\\AREALM.csv";
 		ImportCsvData importData=new ImportCsvData(data);
 		Connection con = DBUtil.getConnection();
