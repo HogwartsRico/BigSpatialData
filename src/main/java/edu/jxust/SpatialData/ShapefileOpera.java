@@ -44,7 +44,7 @@ public class ShapefileOpera {
 		DataStore dataStore = DataStoreFinder.getDataStore(params);
 		String typeName = dataStore.getTypeNames()[0];
 		FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore.getFeatureSource(typeName);
-
+		
 		// FeatureCollection<SimpleFeatureType, SimpleFeature> collection =
 		// source.getFeatures();
 		return source.getFeatures();
