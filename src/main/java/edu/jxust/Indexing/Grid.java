@@ -63,6 +63,13 @@ public class Grid implements Comparable<Grid> {
 		Initial(gridLevel, this.gridCoordinate, getGridGeomtry(gridLevel, gridCoordinate));
 	}
 
+	/** 
+	* <p>Title: </p> 
+	* <p>Description: </p> 
+	* @param gridLevel
+	* @param x 地理坐标x
+	* @param y 地理坐标y
+	*/
 	public Grid(Integer gridLevel, double x, double y) {
 		this.gridCoordinate = getGridCoordinate(gridLevel, x, y);
 		Initial(gridLevel, this.gridCoordinate, getGridGeomtry(gridLevel, this.gridCoordinate));

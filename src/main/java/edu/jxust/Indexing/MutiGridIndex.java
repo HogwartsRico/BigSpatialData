@@ -23,7 +23,7 @@ public class MutiGridIndex {
 
 	public List<Grid> Index(Geometry geometry, Integer lastGridLevel) {
 		// List<Grid> grids = new ArrayList<>();
-		Grid startGrid = Grid.getGridFromBox(geometry.getEnvelopeInternal());
+		Grid startGrid = Grid.getGridFromBox(geometry.getEnvelopeInternal());		
 		return getGridsOnStack(geometry, startGrid, lastGridLevel);
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
@@ -40,6 +40,10 @@ public class MutiGridIndex {
 	public static List<Grid> Index(Geometry geometry, Geometry mbr, Integer lastGridLevel) {
 		List<Grid> grids = new ArrayList<>();
 		Grid startGrid = Grid.getGridFromBox(mbr.getEnvelopeInternal());
+		if(startGrid.getGridLevel()>lastGridLevel){
+			grids.add(new Grid(lastGridLevel,geometry.getCentroid()));
+			return grids;
+		}
 		return getGridsOnRecursive(geometry, startGrid, lastGridLevel, grids);
 		// return Index(geometry, startGrid, lastGridLevel, grids);
 	}
