@@ -30,7 +30,7 @@ public class MutiGridIndexing2 {
 
 		logger = Logger.getLogger(HBaseTest.class);
 		long startTime = System.currentTimeMillis();
-		createGridIndex(10, "SpatialIndex_10_ZJ", "SPATIAL_DATA_ZJ", 0);
+		createGridIndex(9, "SpatialIndex_09_ZJ", "SPATIAL_DATA_ZJ", 0);
 		long endTime = System.currentTimeMillis();
 		logger.info("计算时间：" + (endTime - startTime));
 	}

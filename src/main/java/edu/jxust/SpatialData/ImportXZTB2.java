@@ -52,7 +52,7 @@ public class ImportXZTB2 {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Logger log=Logger.getLogger(ImportXZTB2.class);		
-		String data = "J:\\浙江省土地利用规划数据\\综合数据\\XZTB.shp";
+		String data = "J:\\浙江省土地利用规划数据\\成果数据整理\\XZTB_WGS_1984.shp";
 		Connection con = DBUtil.getDefaultConnection();
 		Long start=System.currentTimeMillis();
 		try {
