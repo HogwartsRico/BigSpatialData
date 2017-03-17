@@ -14,11 +14,10 @@ import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
+import java.util.Iterator;
+
+import org.apache.log4j.Logger;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -31,6 +30,7 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import com.vividsolutions.jts.io.WKBWriter;
 
+import edu.jxust.BigSpatialData.ImportTest;
 import edu.jxust.Common.DBUtil;
 import edu.jxust.Indexing.Grid;
 import edu.jxust.Indexing.GridCode;
@@ -42,21 +42,33 @@ import edu.jxust.Indexing.GridCode;
  * @date 2017年3月16日 下午8:15:12
  * 
  */
-public class ImportXZTB {
+public class ImportXZTB2 {
+
+
 
 	/**
 	 * @Title: main @Description: TODO @param args @throws
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-
+		Logger log=Logger.getLogger(ImportXZTB2.class);		
+		String data = "J:\\浙江省土地利用规划数据\\综合数据\\XZTB.shp";
+		Connection con = DBUtil.getDefaultConnection();
+		Long start=System.currentTimeMillis();
+		try {
+			importData(data,  "XZTB", 0, con);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block			
+			log.error(e);;
+		}
+		log.info(String.format("导入时间：%s", System.currentTimeMillis()-start));	
 	}
 
-	public static void importData(String filePath, Map<String, Object> mapFields, String tableName, int layerId,
+	public static void importData(String filePath, String tableName, int layerId,
 			Connection con) throws Exception {
 
 		WKBWriter wkbWriter = new WKBWriter();
-		StringBuffer sqlGeoInfo = new StringBuffer("upsert into Spatial_Data (");
+		StringBuffer sqlGeoInfo = new StringBuffer("upsert into SPATIAL_DATA_ZJ (");
 		sqlGeoInfo.append("DataKey,");
 		sqlGeoInfo.append("Geometry,");
 		sqlGeoInfo.append("MBR,");
@@ -71,24 +83,25 @@ public class ImportXZTB {
 		sqlAttributeInfo.append(tableName);
 		sqlAttributeInfo.append("(");
 		sqlAttributeInfo.append("Datakey,");
-		int fieldsCount = 0;
-		String fieldsStr = "";
-		String fieldsInStr = "?,";
-		List<String> fields = new ArrayList<>();
-		for (Map.Entry<String, Object> entry : mapFields.entrySet()) {
-			fieldsCount++;
-			fields.add(entry.getKey().toLowerCase());
-			if (mapFields.size() == fieldsCount) {
-				fieldsStr += entry.getKey();
-				fieldsInStr += "?";
-				continue;
-			}
-			fieldsStr += entry.getKey() + ",";
-			fieldsInStr += "?,";
-		}
-		sqlAttributeInfo.append(fieldsStr);
+		sqlAttributeInfo.append("MBBSM,");	
+		sqlAttributeInfo.append("YSDM,");	
+		sqlAttributeInfo.append("DLDM,");	
+		sqlAttributeInfo.append("DLMC,");	
+		sqlAttributeInfo.append("QSXZ,");	
+		sqlAttributeInfo.append("SQBM,");	
+		sqlAttributeInfo.append("SQMC,");	
+		sqlAttributeInfo.append("ZQBM,");	
+		sqlAttributeInfo.append("ZQMC,");	
+		sqlAttributeInfo.append("TBBH,");	
+		sqlAttributeInfo.append("PDJB,");	
+		sqlAttributeInfo.append("TKXS,");	
+		sqlAttributeInfo.append("BSMJ,");	
+		sqlAttributeInfo.append("KSXM,");
+		sqlAttributeInfo.append("KLWM,");	
+		sqlAttributeInfo.append("KKSM,");	
+		sqlAttributeInfo.append("BSJM");			
 		sqlAttributeInfo.append(") values (");
-		sqlAttributeInfo.append(fieldsInStr);
+		sqlAttributeInfo.append("?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?");
 		sqlAttributeInfo.append(")");
 
 		PreparedStatement pstmtSpatialData = con.prepareStatement(sqlGeoInfo.toString());
@@ -98,7 +111,7 @@ public class ImportXZTB {
 		try {
 			ShapefileDataStore sds = (ShapefileDataStore) dataStoreFactory
 					.createDataStore(new File(filePath).toURI().toURL());
-			sds.setCharset(Charset.forName("GBK"));
+			sds.setCharset(Charset.forName("UTF-8"));
 			SimpleFeatureSource featureSource = sds.getFeatureSource();
 			SimpleFeatureIterator itertor = featureSource.getFeatures().features();
 
@@ -119,6 +132,7 @@ public class ImportXZTB {
 				while (it.hasNext()) {
 					Property pro = it.next();
 					String fName = pro.getName().toString().toUpperCase();
+					Object value=pro.getValue();
 					if (fName.toLowerCase().equals("shape_star")) {
 						pstmtSpatialData.setDouble(5, geo.getArea());
 						continue;
@@ -129,11 +143,79 @@ public class ImportXZTB {
 						continue;
 					}
 
-					if (mapFields.containsKey(fName)) {
-						int fieldIndex = fields.indexOf(fName.toLowerCase()) + 2;
-						setPreparedStatementValue(pstmtAttribute, fieldIndex, pro.getType().getBinding(),
-								pro.getValue());
+					if(fName.toUpperCase().equals("MBBSM")){
+						pstmtAttribute.setInt(2, Integer.valueOf(String.valueOf(value)));
+						continue;
 					}
+				
+					if(fName.toUpperCase().equals("YSDM")){
+						pstmtAttribute.setString(3, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("DLDM")){
+						pstmtAttribute.setString(4, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("DLMC")){
+						pstmtAttribute.setString(5, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("QSXZ")){
+						pstmtAttribute.setString(6, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("SQBM")){
+						pstmtAttribute.setString(7, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("SQMC")){
+						pstmtAttribute.setString(8, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("ZQBM")){
+						pstmtAttribute.setString(9, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("ZQMC")){
+						pstmtAttribute.setString(10, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("TBBH")){
+						pstmtAttribute.setString(11, String.valueOf(value));
+						continue;
+					}
+					if(fName.toUpperCase().equals("PDJB")){
+						pstmtAttribute.setString(12, String.valueOf(value));
+						continue;
+					}
+					
+					if(fName.toUpperCase().equals("TKXS")){
+						pstmtAttribute.setDouble(13, (Double)value);
+						continue;
+					}
+					if(fName.toUpperCase().equals("BSMJ")){
+						pstmtAttribute.setDouble(14, (Double)value);
+						continue;
+					}
+					if(fName.toUpperCase().equals("KSXM")){
+						pstmtAttribute.setDouble(15, (Double)value);
+						continue;
+					}
+					if(fName.toUpperCase().equals("KLWM")){
+						pstmtAttribute.setDouble(16, (Double)value);
+						continue;
+					}
+					if(fName.toUpperCase().equals("KKSM")){
+						pstmtAttribute.setDouble(17, (Double)value);
+						continue;
+					}
+					if(fName.toUpperCase().equals("BSJM")){
+						pstmtAttribute.setDouble(18, (Double)value);
+						continue;
+					}
+					
+					
+					
 				}
 				pstmtSpatialData.addBatch();
 				pstmtAttribute.addBatch();
