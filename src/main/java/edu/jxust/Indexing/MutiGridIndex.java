@@ -70,10 +70,7 @@ public class MutiGridIndex {
 	* @throws 
 	*/
 	public static List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel,
-			List<Grid> grids) {
-		System.out.println("网格层级：" + grid.getGridLevel() + " 网格坐标：（" + grid.getGridCoordinate().x + "，"
-				+ grid.getGridCoordinate().y + "）");
-
+			List<Grid> grids) {		
 		if (grid.getGridLevel() < lastGridLevel) {
 			if (geometry.contains(grid.getGridGeometry())) {
 				grids.add(grid);

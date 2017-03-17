@@ -254,18 +254,24 @@ public class HBaseHelper {
 		return list;
 	}
 
-	public void addFamily(String tableName, String familyColumn) throws IOException {
-		HColumnDescriptor columnDescriptor = new HColumnDescriptor(familyColumn);
-		admin.addColumn(tableName, columnDescriptor);
-		System.out.println(String.format("表 %s 成功添加列簇 %s", tableName, familyColumn));
+	public Boolean addFamily(String tableName, String familyColumn) {
+		try {
+			HColumnDescriptor columnDescriptor = new HColumnDescriptor(familyColumn);
+			admin.addColumn(tableName, columnDescriptor);
+			System.out.println(String.format("表 %s 成功添加列簇 %s", tableName, familyColumn));
+			return true;
+		} catch (Exception exc) {
+			exc.printStackTrace();
+			return false;
+		}
 	}
 
 	public void deleteFamily(String tableName, String familyColumn) throws IOException {
 		admin.deleteColumn(tableName, familyColumn);
 		System.out.println(String.format("表 %s 成功删除列簇 %s", tableName, familyColumn));
 	}
-	
-	public void close()throws IOException {
+
+	public void close() throws IOException {
 		this.admin.close();
 	}
 }
