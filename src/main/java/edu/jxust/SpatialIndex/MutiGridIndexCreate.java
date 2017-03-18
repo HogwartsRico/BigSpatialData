@@ -9,32 +9,43 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-
 import org.apache.log4j.Logger;
 
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKBReader;
 
 import edu.jxust.BigSpatialData.HBaseTest;
 import edu.jxust.Common.HBaseHelper;
 import edu.jxust.Indexing.Grid;
+
 import edu.jxust.Indexing.MutiGridIndex;
 
-public class MutiGridIndexing2 {
+public class MutiGridIndexCreate {
 	static Logger logger;
 
-	public static void main(String[] args) throws Exception {	
+	public static void main(String[] args) {
 		logger = Logger.getLogger(HBaseTest.class);
-		long startTime = System.currentTimeMillis();
-		createGridIndex(16, "SpatialIndex_16_ZJ", "SPATIAL_DATA_ZJ", 0);
-		long endTime = System.currentTimeMillis();
-		logger.info("计算时间：" + (endTime - startTime));
+		logger.info("创建索引");
+		String tableName="GHYT";
+		String indexTableName="MutiIndex_18_GHYT";
+		int gridLevel=18;
+		logger.info("创建："+tableName+"	表索引："+indexTableName);
+		try {
+			long startTime = System.currentTimeMillis();
+			createGridIndex(gridLevel, indexTableName, tableName,  0);
+			long endTime = System.currentTimeMillis();
+			logger.info("计算时间：" + (endTime - startTime));
+		} catch (Exception e) {
+			logger.error(e);
+		}
+
 	}
 
-	public static void createGridIndex(int gridLevel, String indexTableName, String spatialTableName, int layerID)
+	public static void createGridIndex(int gridLevel, String indexTableName, String tableName, int layerID)
 			throws Exception {
 		HBaseHelper hbase = new HBaseHelper("master", "2181");
 
-		HTableInterface dtSpatialData = hbase.getTable(spatialTableName);
+		HTableInterface dtSpatialData = hbase.getTable(tableName);
 		HTableInterface dtSpatialIndex = hbase.getTable(indexTableName);
 		byte[] famliyIndex = null;
 		String layerIdStr = Integer.toString(layerID);
@@ -45,11 +56,9 @@ public class MutiGridIndexing2 {
 		famliyIndex = Bytes.toBytes(layerIdStr);
 		Scan scanData = new Scan();
 		byte[] fData = "0".getBytes();// 列簇family
-		byte[] cGeometry = "GEOMETRY".getBytes();// 列column
-		byte[] cMBR = "MBR".getBytes();// 列column
+		byte[] cGeometry = "SHAPE".getBytes();// 列column
 		// 限定扫描列
 		scanData.addColumn(fData, cGeometry);
-		scanData.addColumn(fData, cMBR);
 		ResultScanner rsData = dtSpatialData.getScanner(scanData);
 
 		WKBReader wkb = new WKBReader();
@@ -63,11 +72,10 @@ public class MutiGridIndexing2 {
 			total++;
 			byte[] dataKey = resultData.getRow();// 数据表的行键
 			String rowkeyData = new String(dataKey);
-			byte[] cIndex = rowkeyData.substring(rowkeyData.indexOf("_") + 1).getBytes();// 采用图层标识+顺序码作为索引列名，确保索引一致性
-			
-			List<Grid> grids = MutiGridIndex.Index(wkb.read(resultData.getValue(fData, cGeometry)),
-					wkb.read(resultData.getValue(fData, cMBR)), gridLevel);
-			
+			byte[] cIndex = rowkeyData.substring(rowkeyData.indexOf("_") + layerID).getBytes();// 采用图层标识+顺序码作为索引列名，确保索引一致性
+			Geometry geo = wkb.read(resultData.getValue(fData, cGeometry));
+			List<Grid> grids= MutiGridIndex.Index(geo, geo.getEnvelope(),gridLevel);
+
 			for (Grid grid : grids) {
 				Put put = new Put(grid.getGridCode().getBytes());
 				put.add(famliyIndex, cIndex, dataKey);
