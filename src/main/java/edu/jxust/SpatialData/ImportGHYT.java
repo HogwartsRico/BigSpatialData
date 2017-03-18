@@ -30,7 +30,6 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import com.vividsolutions.jts.io.WKBWriter;
 
-import edu.jxust.BigSpatialData.ImportTest;
 import edu.jxust.Common.DBUtil;
 import edu.jxust.Indexing.Grid;
 import edu.jxust.Indexing.GridCode;
@@ -52,11 +51,12 @@ public class ImportGHYT {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Logger log=Logger.getLogger(ImportGHYT.class);		
-		String data = "J:\\浙江省土地利用规划数据\\综合数据\\XZTB.shp";
+		String data = "J:\\浙江省土地利用规划数据\\成果数据整理\\GHYT_WGS_1984.shp";
+		log.info(String.format("导入数据：%s", data));	
 		Connection con = DBUtil.getDefaultConnection();
 		Long start=System.currentTimeMillis();
 		try {
-			importData(data,  "XZTB", 0, con);
+			importData(data,  "GHYT", 1, con);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block			
 			log.error(e);;
@@ -68,7 +68,7 @@ public class ImportGHYT {
 			Connection con) throws Exception {
 
 		WKBWriter wkbWriter = new WKBWriter();
-		StringBuffer sqlGeoInfo = new StringBuffer("upsert into SPATIAL_DATA_ZJ (");
+		StringBuffer sqlGeoInfo = new StringBuffer("upsert into Spatial_Data_GHYT (");
 		sqlGeoInfo.append("DataKey,");
 		sqlGeoInfo.append("Geometry,");
 		sqlGeoInfo.append("MBR,");
@@ -86,7 +86,6 @@ public class ImportGHYT {
 		sqlAttributeInfo.append("SHAPE,");
 		sqlAttributeInfo.append("YSDM,");		
 		sqlAttributeInfo.append("BZ,");	
-		sqlAttributeInfo.append("HQRQ,");	
 		sqlAttributeInfo.append("MBBSM,");	
 		sqlAttributeInfo.append("MJ,");	
 		sqlAttributeInfo.append("GHYTMC,");	
@@ -100,7 +99,7 @@ public class ImportGHYT {
 		sqlAttributeInfo.append("GHYTDM,");
 		sqlAttributeInfo.append("PZWH");				
 		sqlAttributeInfo.append(") values (");
-		sqlAttributeInfo.append("?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?");
+		sqlAttributeInfo.append("?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?");
 		sqlAttributeInfo.append(")");
 
 		PreparedStatement pstmtSpatialData = con.prepareStatement(sqlGeoInfo.toString());
@@ -127,8 +126,9 @@ public class ImportGHYT {
 				pstmtSpatialData.setInt(7, layerId);
 
 				pstmtAttribute.setString(1, rowkey);//
-				Iterator<Property> it = feature.getProperties().iterator();
 				pstmtAttribute.setBytes(2, wkbWriter.write(geo));
+				Iterator<Property> it = feature.getProperties().iterator();
+				
 				while (it.hasNext()) {
 					Property pro = it.next();
 					String fName = pro.getName().toString().toUpperCase();
@@ -151,59 +151,56 @@ public class ImportGHYT {
 						pstmtAttribute.setString(4, String.valueOf(value));
 						continue;
 					}
-					if(fName.toUpperCase().equals("HQRQ")){
-						pstmtAttribute.setString(5, String.valueOf(value));
-						continue;
-					}
+				
 					if(fName.toUpperCase().equals("MBBSM")){
-						pstmtAttribute.setLong(6, Long.valueOf(String.valueOf(value)));
+						pstmtAttribute.setLong(5, Long.valueOf(String.valueOf(value)));
 						continue;
 					}
 					
 					if(fName.toUpperCase().equals("MJ")){
-						pstmtAttribute.setDouble(7, (Double)value);
+						pstmtAttribute.setDouble(6, (Double)value);
 						continue;
 					}
 					if(fName.toUpperCase().equals("GHYTMC")){
-						pstmtAttribute.setString(8, String.valueOf(value));
+						pstmtAttribute.setString(7, String.valueOf(value));
 						continue;
 					}
 					if(fName.toUpperCase().equals("XZQHDM")){
-						pstmtAttribute.setString(9, String.valueOf(value));
+						pstmtAttribute.setString(8, String.valueOf(value));
 						continue;
 					}
 					if(fName.toUpperCase().equals("XZQHMC")){
-						pstmtAttribute.setString(10, String.valueOf(value));
+						pstmtAttribute.setString(9, String.valueOf(value));
 						continue;
 					}
 					if(fName.toUpperCase().equals("YTDKBH")){
-						pstmtAttribute.setString(11, String.valueOf(value));
+						pstmtAttribute.setString(10, String.valueOf(value));
 						continue;
 					}
 					if(fName.toUpperCase().equals("GHYTBM")){
-						pstmtAttribute.setString(12, String.valueOf(value));
+						pstmtAttribute.setString(11, String.valueOf(value));
 						continue;
 					}
 					if(fName.toUpperCase().equals("JMJ")){
-						pstmtAttribute.setDouble(13, (Double)value);
+						pstmtAttribute.setDouble(12, (Double)value);
 						continue;
 					}
 					
 					if(fName.toUpperCase().equals("JNLX")){
-						pstmtAttribute.setString(14, String.valueOf(value));
+						pstmtAttribute.setString(13, String.valueOf(value));
 						continue;
 					}
 					
 					if(fName.toUpperCase().equals("XZNTLX")){
-						pstmtAttribute.setString(15, String.valueOf(value));
+						pstmtAttribute.setString(14, String.valueOf(value));
 						continue;
 					}
 					if(fName.toUpperCase().equals("GHYTDM")){
-						pstmtAttribute.setString(16, String.valueOf(value));
+						pstmtAttribute.setString(15, String.valueOf(value));
 						continue;
 					}
 					if(fName.toUpperCase().equals("PZWH")){
-						pstmtAttribute.setString(17, String.valueOf(value));
+						pstmtAttribute.setString(16, String.valueOf(value));
 						continue;
 					}
 					
