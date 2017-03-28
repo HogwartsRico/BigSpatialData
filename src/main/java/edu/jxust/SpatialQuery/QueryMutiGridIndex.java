@@ -20,16 +20,15 @@ import com.vividsolutions.jts.geom.Polygon;
 
 import edu.jxust.Common.QueryRowKey;
 import edu.jxust.Indexing.Grid;
-import edu.jxust.Indexing.MutiGridIndex;
 
-/** 
-* @ClassName: QueryGeometry 
-* @Description: TODO
-* @author 张炫铤
-* @date 2017年3月7日 下午1:52:51 
-*  
-*/
-public class QueryGeometry {
+/**
+ * @ClassName: QueryGeometry
+ * @Description: TODO
+ * @author 张炫铤
+ * @date 2017年3月7日 下午1:52:51
+ * 
+ */
+public class QueryMutiGridIndex {
 	List<Grid> lastLevelGrids;
 	List<String> lastLevelGridCodes;
 
@@ -41,15 +40,10 @@ public class QueryGeometry {
 		return this.lastLevelGridCodes;
 	}
 
-	/** 
-	* @Title: Index 
-	* @Description: 多级网格索引分治策略剖分
-	* @param geometry
-	* @param mbr
-	* @param lastGridLevel
-	* @return
-	* @throws 
-	*/
+	/**
+	 * @Title: Index @Description: 多级网格索引分治策略剖分 @param geometry @param
+	 *         mbr @param lastGridLevel @return @throws
+	 */
 	public List<Grid> getIndexGrids(Geometry queryGeometry, Integer startLevel, Integer lastGridLevel) {
 		List<Grid> grids = new ArrayList<>();
 		lastLevelGrids = new ArrayList<>();
@@ -88,17 +82,13 @@ public class QueryGeometry {
 		return getGridCodesOnRecursive(queryGeometry, startGrid, lastGridLevel, grids);
 	}
 
-	/** 
-	* @Title: getGridsOnRecursive 
-	* @Description: 递归遍历网格,采用分治策略进行多级网格索引构建
-	* @param geometry 几何
-	* @param grid 网格
-	* @param lastGridLevel 终止层级
-	* @param grids 网格集合
-	* @return
-	* @throws 
-	*/
+	/**
+	 * @Title: getGridsOnRecursive @Description: 递归遍历网格,采用分治策略进行多级网格索引构建 @param
+	 *         geometry 几何 @param grid 网格 @param lastGridLevel 终止层级 @param grids
+	 *         网格集合 @return @throws
+	 */
 	private List<Grid> getGridsOnRecursive(Geometry geometry, Grid grid, Integer lastGridLevel, List<Grid> grids) {
+
 		if (grid.getGridLevel() < lastGridLevel) {
 			if (geometry.contains(grid.getGridGeometry())) {
 				grids.add(grid);
@@ -109,8 +99,9 @@ public class QueryGeometry {
 		} else if (grid.getGridGeometry().intersects(geometry)) {//
 			if (geometry.contains(grid.getGridGeometry())) {
 				grids.add(grid);
-			} else
-				lastLevelGrids.add(grid);// ||
+			} else {
+				lastLevelGrids.add(grid);
+			}
 		}
 		return grids;
 	}
@@ -133,15 +124,11 @@ public class QueryGeometry {
 		return gridCodes;
 	}
 
-	/** 
-	* @Title: TravereseSubGrids 
-	* @Description: 遍历子网格
-	* @param geometry 待剖分的几何
-	* @param splitGrids 分割网格数组
-	* @param lastGridLevel 终止网格层级
-	* @param grids 网格集合
-	* @throws 
-	*/
+	/**
+	 * @Title: TravereseSubGrids @Description: 遍历子网格 @param geometry
+	 *         待剖分的几何 @param splitGrids 分割网格数组 @param lastGridLevel
+	 *         终止网格层级 @param grids 网格集合 @throws
+	 */
 	private void TravereseSubGrids(Geometry geometry, Grid[] splitGrids, Integer lastGridLevel, List<Grid> grids) {
 		for (int i = 0; i < 4; i++) {
 			if (geometry.intersects(splitGrids[i].getGridGeometry()) == false)
@@ -161,14 +148,10 @@ public class QueryGeometry {
 		}
 	}
 
-	/** 
-	* @Title: intersection 
-	* @Description: 取两个Geometry交集
-	* @param geometry1
-	* @param geometry2
-	* @return 相交部分Geometry
-	* @throws 
-	*/
+	/**
+	 * @Title: intersection @Description: 取两个Geometry交集 @param geometry1 @param
+	 *         geometry2 @return 相交部分Geometry @throws
+	 */
 	private Geometry intersection(Geometry geometry1, Geometry geometry2) {
 		Geometry geometry = geometry1.intersection(geometry2);
 		if (geometry.getGeometryType().equals("GeometryCollection") == false)

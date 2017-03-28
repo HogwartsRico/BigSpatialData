@@ -27,8 +27,8 @@ public class MutiGridIndexCreate {
 		logger = Logger.getLogger(HBaseTest.class);
 		logger.info("创建索引");
 		String tableName="GHYT";
-		String indexTableName="MutiIndex_18_GHYT";
-		int gridLevel=18;
+		String indexTableName="MutiIndex_19_GHYT";
+		int gridLevel=19;
 		logger.info("创建："+tableName+"	表索引："+indexTableName);
 		try {
 			long startTime = System.currentTimeMillis();

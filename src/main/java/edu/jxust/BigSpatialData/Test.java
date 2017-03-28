@@ -16,26 +16,36 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.geotools.geojson.geom.GeometryJSON;
+import org.geotools.geometry.jts.JTSFactoryFinder;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.io.WKTReader;
 
 import edu.jxust.Common.QueryRowKey;
 import edu.jxust.Indexing.Grid;
 
-/** 
-* @ClassName: Test 
-* @Description: TODO
-* @author 张炫铤
-* @date 2017年3月6日 下午6:36:59 
-*  
-*/
+/**
+ * @ClassName: Test
+ * @Description: TODO
+ * @author 张炫铤
+ * @date 2017年3月6日 下午6:36:59
+ * 
+ */
 public class Test {
 	public static void main(String[] args) throws Exception {
-
+		GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+		WKTReader wktReader = new WKTReader(geometryFactory);
+		String geoWKT = "POLYGON ((-110.92 -61.22, -110.92 65.18, 49.01 65.18, 49.01 -61.22, -110.92 -61.22))";
+		Geometry geo = wktReader.read(geoWKT);
+		GeometryJSON gJson = new GeometryJSON();
+		String geoJson = gJson.toString(geo);
 		Grid g = new Grid(16, new Coordinate(10, 16));
 		Grid g1 = new Grid(16, new Coordinate(10, 17));
 		Grid g2 = new Grid(16, new Coordinate(11, 16));
-		
+
 		Grid g3 = new Grid(15, new Coordinate(11, 18));
 		Grid g4 = new Grid(15, new Coordinate(11, 19));
 		Grid g5 = new Grid(15, new Coordinate(11, 20));
@@ -62,7 +72,8 @@ public class Test {
 		}
 		Collections.sort(grids);
 		for (Grid gg : grids) {
-			System.out.println(String.format("层级：%s，编码：%s,网格编码：%s", gg.getGridLevel(), gg.getHilbertNumber(),gg.getGridCode()));
+			System.out.println(
+					String.format("层级：%s，编码：%s,网格编码：%s", gg.getGridLevel(), gg.getHilbertNumber(), gg.getGridCode()));
 		}
 		Logger log = Logger.getLogger(Test.class);
 		String dataFile = "G:\\MyFile\\研究生\\论文\\云计算\\测试数据\\AREALM.csv";

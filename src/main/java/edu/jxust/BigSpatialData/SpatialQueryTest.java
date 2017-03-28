@@ -37,7 +37,9 @@ import com.vividsolutions.jts.io.WKTWriter;
 
 import edu.jxust.Common.HBaseHelper;
 import edu.jxust.Common.QueryRowKey;
+import edu.jxust.SpatialData.ShapefileOpera;
 import edu.jxust.SpatialQuery.QueryGeometry;
+import edu.jxust.SpatialQuery.QueryMutiGridIndex;
 
 /**
  * @ClassName: SpatialQueryTest
@@ -58,7 +60,21 @@ public class SpatialQueryTest {
 		// TODO Auto-generated method stub
 		logger = Logger.getLogger(SpatialQueryTest.class);
 
-		spatialQuery(testGeoE12(),8,9);
+		// spatialQuery(testGeoE12(),8,10);//ShapefileOpera
+		//String path = "G:\\张炫铤_工作空间\\测试数据\\data\\半山村_WGS_1984.shp";//杭州市辖区_WGS_1984.shp
+		String path = "G:\\张炫铤_工作空间\\测试数据\\data\\XZQH_三墩镇_WGS_1984.shp";//吉鸿村_WGS_1984
+		//String path = "G:\\张炫铤_工作空间\\测试数据\\data\\吉鸿村_WGS_1984.shp";//
+		int startLevel = 14;
+		int endLevel = 16;
+		String indextable = String.format("MutiIndex_%s_GHYT", StringUtils.leftPad(Integer.toString(endLevel), 2, '0'));
+		String tableName = "GHYT";
+		spatialQuery(ShapefileOpera.getDefaultGeometry(path), tableName, indextable, startLevel, endLevel);
+	}
+
+	private static Geometry getTestGeo() {
+		Envelope mbr = new Envelope(-87.8457281954403, -87.84384366232354, 33.13371679835768, 33.135144474961294);
+		GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+		return geometryFactory.toGeometry(mbr);
 	}
 
 	private static Geometry testGeoE1() {
@@ -134,7 +150,6 @@ public class SpatialQueryTest {
 		return geometryFactory.toGeometry(mbr);
 	}
 
-	
 	private static Geometry testGeoE10() {
 		Envelope mbr = new Envelope(-87.83, -87.60, 41.54, 41.77);
 		GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
@@ -150,6 +165,7 @@ public class SpatialQueryTest {
 		String wkt = wktWriter.write(geo.getEnvelope());
 		return geo;
 	}
+
 	// E4
 	private static Geometry testGeoE12() throws Exception {
 		Envelope mbr = new Envelope(-87.540, -85.840, 20.130, 33.130);
@@ -219,7 +235,7 @@ public class SpatialQueryTest {
 		logger.info(String.format("查询返回记录：", i));
 	}
 
-	private static void spatialQuery(String geoWKT,int startLevel,int endLevel) throws Exception {
+	private static void spatialQuery(String geoWKT, int startLevel, int endLevel) throws Exception {
 
 		GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
 		// String geoWKT = "MULTIPOLYGON (((-87.845456936885569
@@ -233,15 +249,58 @@ public class SpatialQueryTest {
 		WKTReader wktReader = new WKTReader(geometryFactory);
 		// WKBReader wkbReader = new WKBReader();
 		Geometry geo = wktReader.read(geoWKT);
-		spatialQuery(geo,startLevel,endLevel);
+		spatialQuery(geo, startLevel, endLevel);
 	}
 
-	private static void spatialQuery(Geometry geo,int startLevel,int endLevel) throws Exception {
+	private static void spatialQuery(Geometry geo, String tableName, String indexTable, int startLevel, int endLevel)
+			throws Exception {
+		QueryMutiGridIndex query = new QueryMutiGridIndex();
+		HBaseHelper hbase = new HBaseHelper();
+		byte[] family = Bytes.toBytes("0");
+		byte[] qualifier = Bytes.toBytes("SHAPE");
+		HTableInterface tableIndex = hbase.getTable(indexTable);
+		HTableInterface tableSpatial = hbase.getTable(tableName);
+
+		long startTime = System.currentTimeMillis();
+		// List<String> queryCodes = query.getIndexGridCodes(geo, 8, 16);
+		// List<String> dealCodes = query.getLastLevelGridCodes();
+
+		Map<QueryRowKey, Integer> queryCodes = query.getIndexMapGridCodes(geo, startLevel, endLevel);
+		Map<QueryRowKey, Integer> dealCodes = query.getLastLevelMapGridCodes();
+
+		List<String> spatialDataKey = new ArrayList<String>();
+		List<String> indexDataKey = new ArrayList<String>();
+		for (Entry<QueryRowKey, Integer> entry : queryCodes.entrySet()) {
+			getQuery(tableIndex, entry.getKey(), spatialDataKey);
+
+		}
+
+		for (Entry<QueryRowKey, Integer> entry : dealCodes.entrySet()) {
+			getIndexKeyQuery(tableIndex, entry.getKey(), spatialDataKey, indexDataKey);
+		}
+
+		for (String dataKey : indexDataKey) {
+			getSpatialDataKeyQuery(tableSpatial, family, qualifier, Bytes.toBytes(dataKey), geo, spatialDataKey);
+		}
+		long endTime = System.currentTimeMillis();
+		hbase.close();
+
+		int i = 0;
+		for (String datakey : spatialDataKey) {
+			logger.info(datakey);
+			i++;
+		}
+		logger.info(String.format("查询返回记录：%s", i));
+		logger.info(String.format("查询时间为:%s", endTime - startTime));
+	}
+
+	private static void spatialQuery(Geometry geo, int startLevel, int endLevel) throws Exception {
 		QueryGeometry query = new QueryGeometry();
 		HBaseHelper hbase = new HBaseHelper();
 		byte[] family = Bytes.toBytes("GeometryInfo");
 		byte[] qualifier = Bytes.toBytes("Geometry");
-		HTableInterface tableIndex = hbase.getTable(String.format("SpatialIndex_%s",StringUtils.leftPad(Integer.toString(endLevel), 2, '0')));
+		HTableInterface tableIndex = hbase
+				.getTable(String.format("SpatialIndex_%s", StringUtils.leftPad(Integer.toString(endLevel), 2, '0')));
 		HTableInterface tableSpatial = hbase.getTable("SpatialData");
 
 		long startTime = System.currentTimeMillis();
@@ -294,6 +353,51 @@ public class SpatialQueryTest {
 		}
 	}
 
+	private static void getQuerybyGeo(HTableInterface table, QueryRowKey queryKey, byte[] family, byte[] qualifier,
+			Geometry geo, List<String> values) throws IOException, Exception {
+		Scan scan = new Scan();
+		scan.addColumn(family, qualifier);
+		scan.setStartRow(Bytes.toBytes(queryKey.getStartRow()));
+		scan.setStopRow(Bytes.toBytes(queryKey.getStopRow()));
+		ResultScanner scanner = table.getScanner(scan);
+		WKBReader wkbReader = new WKBReader();
+		Result rs = scanner.next();
+		while (rs != null) {
+			for (Cell cell : rs.rawCells()) {
+
+				byte[] dataValue = CellUtil.cloneValue(cell);
+				String value = Bytes.toString(CellUtil.cloneValue(cell));
+				if (values.contains(value) == false && wkbReader.read(dataValue).intersects(geo)) {
+					values.add(Bytes.toString(rs.getRow()));
+				}
+			}
+			rs = scanner.next();
+		}
+	}
+
+	private static void getResultKey(HTableInterface table, QueryRowKey queryKey, Map<String, byte[]> spatialDataKeyMap)
+			throws IOException {
+		Scan scan = new Scan();
+		scan.setStartRow(Bytes.toBytes(queryKey.getStartRow()));
+		scan.setStopRow(Bytes.toBytes(queryKey.getStopRow()));
+		ResultScanner scanner = table.getScanner(scan);
+		Result rs = scanner.next();
+		int i = 0;
+		while (rs != null) {
+			for (Cell cell : rs.rawCells()) {
+				byte[] rowkey = CellUtil.cloneValue(cell);
+				String value = Bytes.toString(rowkey);
+				if (spatialDataKeyMap.containsKey(value))
+					continue;
+				i++;
+				spatialDataKeyMap.put(value, rowkey);
+			}
+			rs = scanner.next();
+		}
+
+		i = i + 0;
+	}
+
 	private static void getIndexKeyQuery(HTableInterface table, QueryRowKey queryKey, List<String> spatialDataKey,
 			List<String> values) throws IOException {
 		Scan scan = new Scan();
@@ -312,6 +416,26 @@ public class SpatialQueryTest {
 		}
 	}
 
+	private static void getIndexKeyQueryMap(HTableInterface table, QueryRowKey queryKey,
+			Map<String, byte[]> spatialDataKeyMap, Map<String, byte[]> indexDataKeyMap) throws IOException {
+		Scan scan = new Scan();
+		scan.setStartRow(Bytes.toBytes(queryKey.getStartRow()));
+		scan.setStopRow(Bytes.toBytes(queryKey.getStopRow()));
+		ResultScanner scanner = table.getScanner(scan);
+		Result rs = scanner.next();
+		while (rs != null) {
+			for (Cell cell : rs.rawCells()) {
+				byte[] rowkey = CellUtil.cloneValue(cell);
+				String dataValue = Bytes.toString(rowkey);
+				if (spatialDataKeyMap.containsKey(dataValue) || indexDataKeyMap.containsKey(dataValue))
+					continue;
+				indexDataKeyMap.put(dataValue, rowkey);
+			}
+			rs = scanner.next();
+		}
+	}
+
+	//
 	private static void getSpatialDataKeyQuery(HTableInterface table, byte[] family, byte[] qualifier, byte[] dataKey,
 			Geometry geo, List<String> spatialDataKey) throws IOException, Exception {
 		Scan scan = new Scan();
@@ -326,6 +450,26 @@ public class SpatialQueryTest {
 				byte[] dataValue = CellUtil.cloneValue(cell);
 				if (wkbReader.read(dataValue).intersects(geo)) {
 					spatialDataKey.add(Bytes.toString(rs.getRow()));
+				}
+			}
+			rs = scanner.next();
+		}
+	}
+
+	private static void getSpatialDataKeyQuery(HTableInterface table, byte[] family, byte[] qualifier, byte[] dataKey,
+			Geometry geo, Map<String, byte[]> spatialDataKeyMap) throws IOException, Exception {
+		Scan scan = new Scan();
+		scan.addColumn(family, qualifier);
+		scan.setStartRow(dataKey);
+		scan.setStopRow(dataKey);
+		ResultScanner scanner = table.getScanner(scan);
+		Result rs = scanner.next();
+		WKBReader wkbReader = new WKBReader();
+		while (rs != null) {
+			for (Cell cell : rs.rawCells()) {
+				byte[] dataValue = CellUtil.cloneValue(cell);
+				if (wkbReader.read(dataValue).intersects(geo)) {
+					spatialDataKeyMap.put(Bytes.toString(rs.getRow()), rs.getRow());
 				}
 			}
 			rs = scanner.next();
